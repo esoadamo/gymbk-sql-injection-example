@@ -46,8 +46,8 @@ class Database:
     def get_user_id(self, username: str) -> int:
         return self.execute('SELECT id FROM users WHERE name = ?', (username,))[0][0]
 
-    def get_users(self) -> list:
-        return self.execute('SELECT id, name FROM users')
+    def get_other_users(self, username: str) -> list:
+        return self.execute('SELECT id, name FROM users WHERE name != ?', (username,))
 
     def transfer(self, from_username: str, to: int, coins: float, message: str) -> None:
         coins_now = self.get_coins(from_username)

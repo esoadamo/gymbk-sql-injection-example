@@ -49,7 +49,7 @@ def hello_world():  # put application's code here
     return render_template('index.html',
                            name=name,
                            coins=database.get_coins(name),
-                           users=database.get_users(),
+                           users=database.get_other_users(name),
                            transactions=database.get_user_transactions(name))
 
 
