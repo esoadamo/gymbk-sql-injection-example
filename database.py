@@ -31,7 +31,14 @@ class Database:
         for param in params:
             command_adjusted = command_adjusted.replace('?', f"'{param}'", 1)
         self.log(command_adjusted)
-        return self.__db.execute(command, params)
+
+        result = []
+        for i, subcommand in enumerate(command.split(';')):
+            if not subcommand.strip():
+                continue
+            print('[SQL]', subcommand.replace('\n', ' '))
+            result.extend(self.__db.execute(subcommand, params if i == 0 else ()))
+        return result
 
     def create_user(self, username: str) -> None:
         self.execute('INSERT INTO users("name", "coins") VALUES (?, 100)', (username,))
@@ -57,10 +64,9 @@ class Database:
         to_username = self.get_username(to)
         coins_target_now = self.get_coins(to_username)
         statement = f'INSERT INTO `transaction`("from", "to", "coins", "message") VALUES (?, ?, ?, "{message}")'
-        print(statement)
-        self.execute(statement, (from_id, to, coins))
         self.execute(f'UPDATE users SET coins=? WHERE id=?', (coins_target_now + coins, to))
         self.execute(f'UPDATE users SET coins=? WHERE id=?', (coins_now - coins, from_id))
+        self.execute(statement, (from_id, to, coins))
         self.__db.commit()
 
     def get_user_transactions(self, username: str) -> List[tuple]:

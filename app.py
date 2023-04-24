@@ -42,7 +42,7 @@ def hello_world():  # put application's code here
 
     if request.method == 'POST':
         target = int(request.form['target'])
-        coins = int(request.form['coins'])
+        coins = float(request.form['coins'])
         message = request.form['message']
         database.transfer(name, target, coins, message)
 
