@@ -20,6 +20,8 @@ class Database:
                 self.__db.execute('SELECT message FROM log ORDER BY id DESC;')
             ))
             self.log('Started up')
+        self.__coins_sum = self.get_coins_sum()
+        self.log(f'Starting sum of coins: {self.__coins_sum}')
 
     def log(self, message: str) -> None:
         message = f"{datetime.now()}: {message}"
@@ -41,7 +43,10 @@ class Database:
         return result
 
     def create_user(self, username: str) -> None:
-        self.execute('INSERT INTO users("name", "coins") VALUES (?, 100)', (username,))
+        starting_coins = 100
+        self.__coins_sum += starting_coins
+        self.log(f'New sum of coins: {self.__coins_sum}')
+        self.execute('INSERT INTO users("name", "coins") VALUES (?, ?)', (username, starting_coins))
         self.__db.commit()
 
     def get_coins(self, username: str) -> float:
@@ -84,6 +89,12 @@ ON t.`from` = u.id  WHERE `to` = ? ) ORDER by id DESC""", (uid, uid))
 
     def get_log(self) -> List[str]:
         return list(self.__log)
+
+    def get_coins_sum(self) -> float:
+        return self.__db.execute('SELECT SUM(coins) FROM users;')[0][0]
+
+    def check_coin_sum(self) -> bool:
+        return abs(self.__coins_sum - self.get_coins_sum()) < 0.1
 
     def create_database(self) -> None:
         self.__db.execute('''CREATE TABLE "log" (

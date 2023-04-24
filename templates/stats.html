@@ -16,6 +16,15 @@
     <div class="row">
         <h1>Monitor</h1>
     </div>
+    {% if hacked %}
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    WARNING: Successful hack detected
+                </div>
+            </div>
+        </div>
+    {% endif %}
     <div class="row">
         <div class="col-lg-6">
             <h2>Users</h2>

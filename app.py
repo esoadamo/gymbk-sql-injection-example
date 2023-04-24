@@ -30,7 +30,8 @@ def stats():
     return render_template('stats.html',
                            stats=database.get_user_stats(),
                            transactions=database.get_transactions(),
-                           log=database.get_log()
+                           log=database.get_log(),
+                           hacked=not database.check_coin_sum()
                            )
 
 
