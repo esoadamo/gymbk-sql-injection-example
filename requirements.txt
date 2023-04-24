@@ -1,0 +1,7 @@
+click==8.1.3
+Flask==2.2.3
+itsdangerous==2.1.2
+Jinja2==3.1.2
+MarkupSafe==2.1.2
+sqlitedb @ git+https://github.com/esoadamo/Python-SQLiteDB.git@2ade19494cf91c74e1ec43383dd5b9aaf1501a40
+Werkzeug==2.2.3
