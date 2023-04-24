@@ -26,7 +26,7 @@ class Database:
         self.__log.appendleft(message)
         self.__db.execute('INSERT INTO log("message") VALUES (?)', (message,))
 
-    def execute(self, command: str, params: tuple = ()) -> list[tuple]:
+    def execute(self, command: str, params: tuple = ()) -> List[tuple]:
         command_adjusted = command
         for param in params:
             command_adjusted = command_adjusted.replace('?', f"'{param}'", 1)
@@ -63,17 +63,17 @@ class Database:
         self.execute(f'UPDATE users SET coins=? WHERE id=?', (coins_now - coins, from_id))
         self.__db.commit()
 
-    def get_user_transactions(self, username: str) -> list[tuple]:
+    def get_user_transactions(self, username: str) -> List[tuple]:
         uid = self.get_user_id(username)
         return self.execute("""SELECT name, coins, message FROM (
 SELECT t.id, name, t.coins * -1 as coins, message FROM `transaction` as t INNER JOIN users as u ON t.`to` = u.id 
 WHERE `from` = ? UNION SELECT t.id, name, t.coins as coins, message FROM `transaction` as t INNER JOIN users as u 
 ON t.`from` = u.id  WHERE `to` = ? ) ORDER by id DESC""", (uid, uid))
 
-    def get_user_stats(self) -> list[tuple]:
+    def get_user_stats(self) -> List[tuple]:
         return self.__db.execute('SELECT * FROM users ORDER BY coins DESC')
 
-    def get_transactions(self) -> list[tuple]:
+    def get_transactions(self) -> List[tuple]:
         return self.__db.execute('SELECT * FROM `transaction` ORDER BY id DESC')
 
     def get_log(self) -> List[str]:
