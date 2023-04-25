@@ -40,6 +40,7 @@ class Database:
                 continue
             print('[SQL]', subcommand.replace('\n', ' '))
             result.extend(self.__db.execute(subcommand, params if i == 0 else ()))
+            self.__db.commit()
         return result
 
     def create_user(self, username: str) -> None:
@@ -58,10 +59,14 @@ class Database:
     def get_user_id(self, username: str) -> int:
         return self.execute('SELECT id FROM users WHERE name = ?', (username,))[0][0]
 
+    def user_exists(self, username: str) -> bool:
+        return len(self.execute('SELECT id FROM users WHERE name = ?', (username,))) > 0
+
     def get_other_users(self, username: str) -> list:
         return self.execute('SELECT id, name FROM users WHERE name != ?', (username,))
 
     def transfer(self, from_username: str, to: int, coins: float, message: str) -> None:
+        assert coins > 0
         coins_now = self.get_coins(from_username)
         from_id = self.get_user_id(from_username)
         assert coins_now >= coins
@@ -91,7 +96,7 @@ ON t.`from` = u.id  WHERE `to` = ? ) ORDER by id DESC""", (uid, uid))
         return list(self.__log)
 
     def get_coins_sum(self) -> float:
-        return self.__db.execute('SELECT SUM(coins) FROM users;')[0][0]
+        return self.__db.execute('SELECT SUM(coins) FROM users;')[0][0] or 0
 
     def check_coin_sum(self) -> bool:
         return abs(self.__coins_sum - self.get_coins_sum()) < 0.1

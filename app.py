@@ -10,7 +10,8 @@ app.secret_key = 'gymbk'
 
 
 def get_username() -> Optional[str]:
-    return session.get('username')
+    saved = session.get('username')
+    return saved if database.user_exists(saved) else None
 
 
 @app.route('/login', methods=["GET", "POST"])
@@ -19,8 +20,10 @@ def login():
         return redirect(url_for('hello_world'))
 
     if request.method == 'POST':
-        session['username'] = request.form['name']
-        database.create_user(session['username'])
+        username = request.form['name'].strip()
+        assert not database.user_exists(username)
+        database.create_user(username)
+        session['username'] = username
         return redirect(url_for('hello_world'))
     return render_template('login.html')
 
@@ -37,7 +40,11 @@ def stats():
 
 @app.route('/', methods=['GET', 'POST'])
 def hello_world():  # put application's code here
-    name = get_username()
+    try:
+        name = get_username()
+    except IndexError:
+        name = None
+
     if name is None:
         return redirect(url_for('login'))
 
