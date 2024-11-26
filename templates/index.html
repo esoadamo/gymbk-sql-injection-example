@@ -14,7 +14,7 @@
 <div class="container">
     <div class="row">
         <div class="col-12">
-            <strong>Hello {{ name }}!</strong> You have <strong>{{ coins }}</strong> &#129689;
+            Hello <strong>{{ name }}</strong>! You have <strong>{{ "{:0,.2f}".format(coins) }}</strong> &#129689;
             <button class="btn btn-small btn-secondary" onclick="window.location.reload()">Refresh</button>
             <button class="btn btn-small btn-outline-danger" onclick="alert('{{ secret_code }}')">Show login code</button>
         </div>
@@ -42,16 +42,16 @@
                 <div class="form-text">To whom to send money?</div>
             </div>
             <div class="col-3">
-                <label for="exampleInputEmail1" class="form-label">How many</label>
-                <input type="text" name="coins" class="form-control" id="exampleInputEmail1"
-                       aria-describedby="emailHelp">
-                <div id="emailHelp" class="form-text">How many coins to send?</div>
+                <label for="inputCoins" class="form-label">How many</label>
+                <input type="text" name="coins" class="form-control" id="inputCoins"
+                       aria-describedby="inputCoinsHelp">
+                <div id="inputCoinsHelp" class="form-text">How many coins to send?</div>
             </div>
             <div class="col-6">
-                <label for="exampleInputEmail1" class="form-label">Message</label>
-                <input type="text" name="message" class="form-control" id="exampleInputEmail1"
-                       aria-describedby="emailHelp">
-                <div id="emailHelp" class="form-text">Optional message</div>
+                <label for="inputMessage" class="form-label">Message</label>
+                <input type="text" name="message" class="form-control" id="inputMessage"
+                       aria-describedby="inputMessageHelp">
+                <div id="inputMessageHelp" class="form-text">Optional message</div>
             </div>
             </div>
             <button type="submit" class="btn btn-primary">Send</button>
