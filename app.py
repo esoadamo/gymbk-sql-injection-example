@@ -3,11 +3,15 @@ from typing import Optional
 from time import sleep
 from random import randint
 from flask import Flask, render_template, session, request, redirect, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 from database import Database
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = 'gymbk'
+app.wsgi_app = ProxyFix(
+    app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+)
 secret_length = 12
 database = Database(app, secret_length)
 
@@ -85,7 +89,8 @@ def page_main():  # put application's code here
 
 @app.before_request
 def gather_request_data():
-    sleep(1 + randint(0, 30) / 10)
+    if request.remote_addr != '127.0.0.1':
+        sleep(1 + randint(0, 30) / 10)
 
 
 if __name__ == '__main__':
