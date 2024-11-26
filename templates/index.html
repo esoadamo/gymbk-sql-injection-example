@@ -16,8 +16,18 @@
         <div class="col-12">
             <strong>Hello {{ name }}!</strong> You have <strong>{{ coins }}</strong> &#129689;
             <button class="btn btn-small btn-secondary" onclick="window.location.reload()">Refresh</button>
+            <button class="btn btn-small btn-outline-danger" onclick="alert('{{ secret_code }}')">Show login code</button>
         </div>
     </div>
+
+    {% if error %}
+    <div class="row">
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row">
         <form method="post" class="p-3" style="border: 1px dotted black">
             <div class="row">

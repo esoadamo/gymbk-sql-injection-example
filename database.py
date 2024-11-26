@@ -1,16 +1,22 @@
 import json
+from random import sample, seed
+from string import digits
 from sys import stderr
-from typing import List
+from typing import List, Optional
 from collections import deque
 from datetime import datetime
+
+from flask import Flask
 from sqlitedb import SQLiteDB
 from os import path
 
 
 class Database:
-    def __init__(self):
+    def __init__(self, app: Flask, secret_length: int):
         file = 'data/db.sqlite3'
         init_db = not path.exists(file)
+        self.__app = app
+        self.__secret_length = secret_length
         self.__db = SQLiteDB(file)
         self.__log = deque()
         if init_db:
@@ -33,10 +39,13 @@ class Database:
         self.__log.appendleft(message_timestamp)
         self.__db.execute('INSERT INTO log("message") VALUES (?)', (message_timestamp,))
 
-    def execute(self, command: str, params: tuple = ()) -> List[tuple]:
+    def execute(self, command: str, params: tuple = (), obfuscate: Optional[List[str]] = None) -> List[tuple]:
         command_adjusted = command
         for param in params:
             command_adjusted = command_adjusted.replace('?', f"'{param}'", 1)
+        if obfuscate:
+            for key in obfuscate:
+                command_adjusted = command_adjusted.replace(key, '*' * len(key))
         self.log(f'[SQL] {command_adjusted}', command=command, params=params)
 
         result = []
@@ -50,9 +59,11 @@ class Database:
 
     def create_user(self, username: str) -> None:
         starting_coins = 100
+        seed(self.__app.secret_key + username)
+        secret_code = ''.join(sample(digits * self.__secret_length, self.__secret_length))
         self.__coins_sum += starting_coins
         self.log(f'New user has arrived! New sum of coins: {self.__coins_sum}', coins_sum=self.__coins_sum, username=username)
-        self.execute('INSERT INTO users("name", "coins") VALUES (?, ?)', (username, starting_coins))
+        self.execute('INSERT INTO users("name", "coins", "secret") VALUES (?, ?, ?)', (username, starting_coins, secret_code), obfuscate=[secret_code])
         self.__db.commit()
 
     def get_coins(self, username: str) -> float:
@@ -61,8 +72,15 @@ class Database:
     def get_username(self, user_id: int) -> str:
         return self.execute('SELECT name FROM users WHERE id = ?', (user_id,))[0][0]
 
+    def get_username_by_secret(self, secret: str) -> Optional[str]:
+        result = self.execute('SELECT name FROM users WHERE secret = ?', (secret,), obfuscate=[secret])
+        return result[0][0] if result else None
+
     def get_user_id(self, username: str) -> int:
         return self.execute('SELECT id FROM users WHERE name = ?', (username,))[0][0]
+
+    def get_user_secret(self, username: str) -> str:
+        return self.execute('SELECT secret FROM users WHERE name = ?', (username,))[0][0]
 
     def user_exists(self, username: str) -> bool:
         return len(self.execute('SELECT id FROM users WHERE name = ?', (username,))) > 0
@@ -72,11 +90,11 @@ class Database:
 
     def transfer(self, from_username: str, to: int, coins: float, message: str) -> None:
         self.log(f'Transfer of {coins} coins attempted to {to}', from_username=from_username, to=to, coins=coins, user_message=message)
-        assert coins > 0
+        assert coins > 0, "Coins must be positive"
         coins_now = self.get_coins(from_username)
         from_id = self.get_user_id(from_username)
-        assert coins_now >= coins
-        assert from_id != to
+        assert coins_now >= coins, "Not enough coins"
+        assert from_id != to, "You can't send coins to yourself"
         to_username = self.get_username(to)
         coins_target_now = self.get_coins(to_username)
         statement = f'INSERT INTO `transaction`("from", "to", "coins", "message") VALUES (?, ?, ?, "{message}")'
@@ -93,7 +111,7 @@ WHERE `from` = ? UNION SELECT t.id, name, t.coins as coins, message FROM `transa
 ON t.`from` = u.id  WHERE `to` = ? ) ORDER by id DESC""", (uid, uid))
 
     def get_user_stats(self) -> List[tuple]:
-        return self.__db.execute('SELECT * FROM users ORDER BY coins DESC')
+        return self.__db.execute('SELECT name, id, coins FROM users ORDER BY coins DESC')
 
     def get_transactions(self) -> List[tuple]:
         return self.__db.execute('SELECT * FROM `transaction` ORDER BY id DESC')
@@ -115,7 +133,8 @@ ON t.`from` = u.id  WHERE `to` = ? ) ORDER by id DESC""", (uid, uid))
 );''')
         self.execute('''CREATE TABLE "users" (
 	"id"	INTEGER NOT NULL UNIQUE,
-	"name"	TEXT NOT NULL,
+	"name"	TEXT NOT NULL UNIQUE,
+	"secret"	TEXT NOT NULL UNIQUE,
 	"coins"	REAL NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );''')

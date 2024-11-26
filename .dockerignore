@@ -5,3 +5,4 @@ wenv/
 .gitignore
 data/
 __pychache__/
+.venv
