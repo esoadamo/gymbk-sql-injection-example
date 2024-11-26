@@ -1,5 +1,6 @@
 from typing import Optional
-
+from time import sleep
+from random import randint
 from flask import Flask, render_template, session, request, redirect, url_for
 from database import Database
 
@@ -59,6 +60,12 @@ def hello_world():  # put application's code here
                            coins=database.get_coins(name),
                            users=database.get_other_users(name),
                            transactions=database.get_user_transactions(name))
+
+
+@app.before_request
+def gather_request_data():
+    sleep(1 + randint(0, 30) / 10)
+
 
 
 if __name__ == '__main__':
