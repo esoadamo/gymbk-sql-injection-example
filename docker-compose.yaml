@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  sqlinjection-example:
+    image: esoadamo/sqlinjection-example
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+        - 127.0.0.1:8927:8927
+    volumes:
+        - ./data:/opt/app/data/
+    cap_add:
+        - NET_ADMIN
+    container_name: sqlinjection-example

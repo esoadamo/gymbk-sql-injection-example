@@ -1,3 +1,5 @@
+import json
+from sys import stderr
 from typing import List
 from collections import deque
 from datetime import datetime
@@ -23,22 +25,25 @@ class Database:
         self.__coins_sum = self.get_coins_sum()
         self.log(f'Starting sum of coins: {self.__coins_sum}')
 
-    def log(self, message: str) -> None:
-        message = f"{datetime.now()}: {message}"
-        self.__log.appendleft(message)
-        self.__db.execute('INSERT INTO log("message") VALUES (?)', (message,))
+    def log(self, message: str, **kwargs) -> None:
+        message_timestamp = f"{datetime.now()}: {message}"
+        params = dict(kwargs)
+        params['$message'] = message
+        print('[LOG]', json.dumps(params), file=stderr, flush=True)
+        self.__log.appendleft(message_timestamp)
+        self.__db.execute('INSERT INTO log("message") VALUES (?)', (message_timestamp,))
 
     def execute(self, command: str, params: tuple = ()) -> List[tuple]:
         command_adjusted = command
         for param in params:
             command_adjusted = command_adjusted.replace('?', f"'{param}'", 1)
-        self.log(command_adjusted)
+        self.log(f'[SQL] {command_adjusted}', command=command, params=params)
 
         result = []
         for i, subcommand in enumerate(command.split(';')):
             if not subcommand.strip():
                 continue
-            print('[SQL]', subcommand.replace('\n', ' '))
+            print('[SQL]', json.dumps({'q': subcommand.replace('\n', ' ')}))
             result.extend(self.__db.execute(subcommand, params if i == 0 else ()))
             self.__db.commit()
         return result
@@ -46,7 +51,7 @@ class Database:
     def create_user(self, username: str) -> None:
         starting_coins = 100
         self.__coins_sum += starting_coins
-        self.log(f'New sum of coins: {self.__coins_sum}')
+        self.log(f'New user has arrived! New sum of coins: {self.__coins_sum}', coins_sum=self.__coins_sum, username=username)
         self.execute('INSERT INTO users("name", "coins") VALUES (?, ?)', (username, starting_coins))
         self.__db.commit()
 
@@ -66,6 +71,7 @@ class Database:
         return self.execute('SELECT id, name FROM users WHERE name != ?', (username,))
 
     def transfer(self, from_username: str, to: int, coins: float, message: str) -> None:
+        self.log(f'Transfer of {coins} coins attempted to {to}', from_username=from_username, to=to, coins=coins, user_message=message)
         assert coins > 0
         coins_now = self.get_coins(from_username)
         from_id = self.get_user_id(from_username)
