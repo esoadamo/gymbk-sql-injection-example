@@ -18,7 +18,7 @@ python app.py
 ```bash
 git clone https://github.com/esoadamo/gymbk-sql-injection-example.git
 cd gymbk-sql-injection-example
-sudo bash docker/build.sh --run /srv/sql_injection_data
+docker-compose up --build
 ```
 
 ## Accessing
